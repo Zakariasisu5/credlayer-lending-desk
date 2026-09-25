@@ -64,8 +64,8 @@ export const checkBorrower = createServerFn({ method: "POST" })
     const apiKey = process.env["CREDLAYER_API_KEY"];
     const baseUrl =
       process.env["CREDLAYER_BASE_URL"] ??
-      "https://ideal-unity-production-3165.up.railway.app/api/v1/api-keys";
-    const threshold = Number(process.env["CREDLAYER_MIN_SCORE"] ?? 60);
+      "https://ideal-unity-production-3165.up.railway.app/api/v1";
+    const threshold = Number(process.env["CREDLAYER_MIN_SCORE"] ?? 600);
 
     const base: CredLayerResult = {
       ok: false,
