@@ -1,70 +1,54 @@
-# CredLayer Lending Desk (demo)
+CredLayer Lending Desk
 
-A single-page lending desk where a lender enters a borrower's wallet address and the app
-retrieves that wallet's **live CredLayer trust score** before showing an illustrative
-lending decision. No mock scores are used anywhere.
+A simple Web3 lending application that uses the CredLayer API to verify a borrower's wallet trust score before making an illustrative lending decision.
 
-## Architecture
+The application demonstrates how developers can integrate CredLayer into a lending workflow using an API key.
 
-- **TanStack Start (React 19 + TypeScript + Tailwind CSS v4)** — this project's fixed stack.
-  The brief mentioned Next.js; the equivalent here is a TanStack **server function**
-  instead of a Next.js API route. Behaviour is identical: the call happens on the server.
-- `src/lib/credlayer.functions.ts` — `checkBorrower`, a server-only function that validates
-  the wallet, calls CredLayer, normalises the score and applies the demo threshold.
-- `src/routes/index.tsx` — the lending dashboard UI (verification form, borrower profile,
-  demo decision, loan request, session request list).
+«Demo only: This application does not provide real credit underwriting, approve real loans, or transfer funds.»
 
-Flow: browser → `checkBorrower` (server) → CredLayer → real score → demo decision.
+How It Works
 
-## How CredLayer is used
+The lending flow is simple:
 
-```
-GET {CREDLAYER_BASE_URL}/scores/{wallet}
-Headers: X-API-Key: <server-side key>, Accept: application/json
-```
+1. A lender enters a borrower's wallet address.
+2. The application sends the wallet address to the server.
+3. The server securely calls the CredLayer API using an API key.
+4. CredLayer returns the wallet's trust information.
+5. The application displays the returned trust score and available risk information.
+6. A demo lending decision is calculated using the configured minimum score.
+7. The lender can submit a demo loan request.
 
-The score is read from the response (`data.trustScore`, with fallbacks for `score`,
-`trust_score`, etc.). Every other field CredLayer returns is displayed as-is, plus the
-full raw JSON — no fields are invented.
+Lender
+  ↓
+Enter Wallet Address
+  ↓
+Lending App
+  ↓
+CredLayer API
+  ↓
+Trust Score & Risk Data
+  ↓
+Demo Lending Decision
 
-## Environment setup
+CredLayer Integration
 
-Copy `.env.example` and set the values (in Lovable these are stored as project secrets):
+The application uses the CredLayer score endpoint:
 
-| Variable | Purpose |
-| --- | --- |
-| `CREDLAYER_API_KEY` | Server-side API key. Required. |
-| `CREDLAYER_BASE_URL` | Defaults to `https://ideal-unity-production-3165.up.railway.app/api/v1` |
-| `CREDLAYER_MIN_SCORE` | Demo eligibility threshold, default `600` |
+GET https://ideal-unity-production-3165.up.railway.app/api/v1/scores/{wallet}
 
-## Running
+Authentication is handled with an API key:
 
-bun install
-bun run dev
-```
+X-API-Key: YOUR_API_KEY
+Accept: application/json
 
-## Security considerations
+The API key is used only on the server.
 
-- The key is read with `process.env` **inside the server handler only**; it is never
-  bundled into client code, never placed in a URL, and never logged.
-- No `VITE_`/`NEXT_PUBLIC_` variant of the key exists.
-- `.env*` files are git-ignored; `.env.example` contains no secret.
-- Wallet input is validated server-side before the outbound request.
+It is never exposed to the browser, placed in a URL, or included in client-side code.
 
-## Demo lending decision
+Example Response
 
-Purely illustrative — not credit underwriting. If CredLayer returns a numeric score:
+A real response from the CredLayer API currently looks like:
 
-- `score >= CREDLAYER_MIN_SCORE` → "Eligible for demo loan"
-- otherwise → "Not eligible for demo loan"
-
-The threshold lives in the backend and is passed to the UI with the result. If no numeric
-score is returned, no decision is shown. Loan requests are kept in browser session state
-only; no funds move.
-
-## Example API response (real, test wallet)
-
-```json
 {
   "success": true,
   "data": {
@@ -79,16 +63,99 @@ only; no funds move.
   },
   "message": null
 }
-```
 
-## Known limitations / findings
+The application displays the information returned by CredLayer rather than creating or inventing its own trust data.
 
-- The documented base URL `.../api/v1/api-keys` returns **404**; the working path is
-  `.../api/v1/scores/{wallet}`. The app uses the working path.
-- **CredLayer currently returns the same score (500) for every wallet tested**, with
-  `confidence: 0.0` and an `explanation` stating its internal ML scoring service is
-  unreachable. This is a CredLayer-side scoring issue, not an app issue — the score shown
-  is genuinely what the API returns.
-- Loan requests are not persisted to a database.
-- Error handling covers invalid wallets, missing key, 401/403, 404, 422, 429, 5xx,
-  network failures and a 15s timeout.
+Demo Lending Decision
+
+The lending decision is illustrative only.
+
+The application uses a configurable minimum trust score:
+
+Score >= minimum score
+        ↓
+Eligible for demo loan
+
+Score < minimum score
+        ↓
+Not eligible for demo loan
+
+The default minimum score is "600".
+
+This threshold is not a statement about real-world creditworthiness and should not be used for actual lending decisions.
+
+Environment Variables
+
+Create a ".env" or ".env.local" file using the following variables:
+
+CREDLAYER_API_KEY=your_test_api_key
+CREDLAYER_BASE_URL=https://ideal-unity-production-3165.up.railway.app/api/v1
+CREDLAYER_MIN_SCORE=600
+
+Variables
+
+Variable| Description
+"CREDLAYER_API_KEY"| Secret API key used to authenticate with CredLayer
+"CREDLAYER_BASE_URL"| CredLayer API base URL
+"CREDLAYER_MIN_SCORE"| Minimum score used for the illustrative lending decision
+
+Never commit your real API key to GitHub.
+
+Running the App
+
+Install dependencies:
+
+bun install
+
+Start the development server:
+
+bun run dev
+
+Open the application in your browser and enter a wallet address to test the CredLayer integration.
+
+Security
+
+The CredLayer API key is a server-side secret.
+
+The application follows these rules:
+
+- API keys are stored in environment variables.
+- API keys are never exposed to the browser.
+- API keys are never included in URLs.
+- API keys are never logged.
+- Secret environment files are excluded from Git.
+- Wallet input is validated before the request is sent to CredLayer.
+
+For production applications, developers should also implement appropriate authentication, authorization, rate limiting, key rotation, monitoring, and secure secret management.
+
+Current CredLayer Status
+
+The application successfully demonstrates the CredLayer API integration, but the current CredLayer scoring service has an issue that affects the returned score.
+
+During testing, multiple wallets returned a trust score of "500" with:
+
+confidence: 0.0
+
+and an explanation indicating that the internal ML scoring service could not be reached.
+
+This means the lending application is displaying the actual response from CredLayer, but the current score should not be treated as a reliable production trust assessment until the underlying ML service is available.
+
+This is an API/scoring-service issue rather than a UI issue in this demo application.
+
+Current Limitations
+
+- Trust scores depend on the availability and correctness of the CredLayer scoring service.
+- Loan requests are currently stored only in browser session state.
+- No real funds are transferred.
+- Lending decisions are illustrative and not financial underwriting.
+- Persistent loan management, authentication, and production lending infrastructure are not included.
+
+Purpose
+
+This project demonstrates a practical integration of CredLayer into a Web3 lending workflow.
+
+The core idea is simple:
+
+«A lending application can use CredLayer's trust and reputation data as an input when evaluating a wallet.»
+
+Developers can use this pattern as a starting point for integrating CredLayer into their own lending, credit, DeFi, or financial applications.
