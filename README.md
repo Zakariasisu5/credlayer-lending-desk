@@ -39,7 +39,6 @@ Copy `.env.example` and set the values (in Lovable these are stored as project s
 
 ## Running
 
-```
 bun install
 bun run dev
 ```
