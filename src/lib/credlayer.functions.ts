@@ -1,5 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
 
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | Json[]
+  | { [key: string]: Json };
+
 export type CredLayerResult = {
   ok: boolean;
   status: number;
@@ -7,7 +15,7 @@ export type CredLayerResult = {
   score: number | null;
   threshold: number;
   eligible: boolean | null;
-  raw: unknown;
+  raw: Json;
   error?: string;
 };
 
@@ -56,8 +64,8 @@ export const checkBorrower = createServerFn({ method: "POST" })
     const apiKey = process.env["CREDLAYER_API_KEY"];
     const baseUrl =
       process.env["CREDLAYER_BASE_URL"] ??
-      "https://ideal-unity-production-3165.up.railway.app/api/v1/api-keys";
-    const threshold = Number(process.env["CREDLAYER_MIN_SCORE"] ?? 60);
+      "https://ideal-unity-production-3165.up.railway.app/api/v1";
+    const threshold = Number(process.env["CREDLAYER_MIN_SCORE"] ?? 600);
 
     const base: CredLayerResult = {
       ok: false,
@@ -91,9 +99,9 @@ export const checkBorrower = createServerFn({ method: "POST" })
       );
 
       const text = await res.text();
-      let parsed: unknown = text;
+      let parsed: Json = text;
       try {
-        parsed = text ? JSON.parse(text) : null;
+        parsed = text ? (JSON.parse(text) as Json) : null;
       } catch {
         /* keep raw text */
       }

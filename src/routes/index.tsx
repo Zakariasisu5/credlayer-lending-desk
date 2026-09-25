@@ -34,6 +34,22 @@ type LoanRequest = {
   createdAt: string;
 };
 
+function returnedFields(raw: unknown): [string, string][] {
+  if (!raw || typeof raw !== "object") return [];
+  const root = raw as Record<string, unknown>;
+  const src =
+    root["data"] && typeof root["data"] === "object"
+      ? (root["data"] as Record<string, unknown>)
+      : root;
+  return Object.entries(src)
+    .filter(
+      ([k, v]) =>
+        !["address", "wallet", "trustScore", "score"].includes(k) &&
+        (typeof v === "string" || typeof v === "number" || typeof v === "boolean"),
+    )
+    .map(([k, v]) => [k, String(v)]);
+}
+
 function formatMoney(n: number) {
   return n.toLocaleString(undefined, {
     style: "currency",
@@ -243,6 +259,19 @@ function LendingDesk() {
                   </dd>
                 </div>
               </dl>
+
+              {returnedFields(result.raw).length > 0 && (
+                <dl className="mt-5 grid gap-3 border-t border-border pt-4 sm:grid-cols-2">
+                  {returnedFields(result.raw).map(([k, v]) => (
+                    <div key={k}>
+                      <dt className="text-xs uppercase tracking-wide text-muted-foreground">
+                        {k}
+                      </dt>
+                      <dd className="mt-0.5 break-words text-sm">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
 
               <details className="mt-5">
                 <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
